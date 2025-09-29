@@ -88,7 +88,7 @@
     background: transparent;
     border-radius: 12px;
     margin: 1rem 0;
-    border: 1px solid rgba(236, 72, 153, 0.2);
+    border: 1px solid rgba(21, 17, 60, 0.2);
   }
   
   .data-table {
@@ -104,7 +104,7 @@
   .data-table td {
     padding: 0.75rem;
     text-align: left;
-    border-bottom: 1px solid rgba(236, 72, 153, 0.2);
+    border-bottom: 1px solid rgba(32, 27, 72, 0.2);
     white-space: nowrap;
     color: #e2e8f0;
   }
