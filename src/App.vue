@@ -37,18 +37,19 @@ body {
 
 .navbar {
   background: #2c3e50;
-  padding: 1rem;
-  display: flex;
-  gap: 2rem;
+  padding: 0.75rem; 
+  gap: 0.25rem; 
   justify-content: center;
-}
+  flex-wrap: wrap; 
 
 .nav-link {
-  color: white;
+  color: white !important;
   text-decoration: none;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0.75rem;
   border-radius: 4px;
   transition: background-color 0.3s;
+  font-size: 0.9rem; 
+  white-space: nowrap; 
 }
 
 .nav-link:hover,
@@ -58,5 +59,18 @@ body {
 
 .main-content {
   padding: 0;
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    gap: 0.15rem;
+    padding: 0.5rem;
+  }
+  
+  .nav-link {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.85rem;
+  }
+}
 }
 </style>
