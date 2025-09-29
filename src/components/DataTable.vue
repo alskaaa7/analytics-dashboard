@@ -104,13 +104,13 @@
   .data-table td {
     padding: 0.75rem;
     text-align: left;
-    border-bottom: 1px solid rgba(32, 27, 72, 0.2);
+    border-bottom: 1px solid rgba(21, 17, 46, 0.2);
     white-space: nowrap;
     color: #e2e8f0;
   }
   
   .data-table th {
-    background: linear-gradient(135deg, rgba(38, 36, 119, 0.2) 0%, rgba(40, 57, 145, 0.1) 100%);
+    background: linear-gradient(135deg, rgba(19, 19, 66, 0.2) 0%, rgba(34, 45, 97, 0.1) 100%);
     font-weight: 600;
     color: #f1f5f9;
     border-bottom: 2px solid rgba(38, 24, 142, 0.378);
