@@ -117,7 +117,7 @@
   }
   
   .data-table tr:hover {
-    background: rgba(236, 72, 153, 0.1);
+    background: rgba(34, 29, 66, 0.1);
   }
   
   .data-table tr:last-child td {
