@@ -88,7 +88,7 @@
     background: transparent;
     border-radius: 12px;
     margin: 1rem 0;
-    border: 1px solid rgba(21, 17, 60, 0.2);
+    border: 1px solid rgba(17, 14, 40, 0.2);
   }
   
   .data-table {
