@@ -110,7 +110,7 @@
   }
   
   .data-table th {
-    background: linear-gradient(135deg, rgba(236, 72, 153, 0.2) 0%, rgba(219, 39, 119, 0.1) 100%);
+    background: linear-gradient(135deg, rgba(38, 36, 119, 0.2) 0%, rgba(40, 57, 145, 0.1) 100%);
     font-weight: 600;
     color: #f1f5f9;
     border-bottom: 2px solid rgba(236, 72, 153, 0.3);
