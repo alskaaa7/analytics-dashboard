@@ -1,6 +1,8 @@
 import { ref } from 'vue'
 
-const API_HOST = 'http://109.73.206.144:6969'
+const API_HOST = import.meta.env.DEV 
+  ? 'http://109.73.206.144:6969'
+  : '/api'
 const API_KEY = 'E6kUTYrYwZq2tN4QEtyzsbEBk3ie'
 
 export function useApi(endpoint) {

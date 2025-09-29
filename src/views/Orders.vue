@@ -264,12 +264,12 @@ const chartData = computed(() => {
     datasets: [{
       label: 'Количество заказов',
       data: sortedDates.map(date => ordersByDate[date]),
-      borderColor: '#ef4444',
+      borderColor: '#ec4899',
       backgroundColor: 'rgba(239, 68, 68, 0.1)',
       borderWidth: 3,
       tension: 0.1,
       fill: true,
-      pointBackgroundColor: '#ef4444',
+      pointBackgroundColor: '#ec4899',
       pointBorderColor: '#ffffff',
       pointBorderWidth: 2,
       pointRadius: 6,
@@ -319,7 +319,7 @@ const initChart = async () => {
           backgroundColor: 'rgba(15, 23, 42, 0.95)',
           padding: 12,
           cornerRadius: 8,
-          borderColor: '#ef4444',
+          borderColor: '#ec4899',
           borderWidth: 1,
           titleColor: '#e2e8f0',
           bodyColor: '#cbd5e1',
@@ -487,7 +487,7 @@ onUnmounted(() => {
   font-size: 2.5rem;
   font-weight: 700;
   text-align: center;
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);
+  background: linear-gradient(135deg, #ec4899 0%, #db2777 50%, #be185d 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -587,7 +587,7 @@ onUnmounted(() => {
   bottom: 0;
   left: 0;
   height: 3px;
-  background: linear-gradient(90deg, #ef4444, #dc2626, #b91c1c);
+  background: linear-gradient(90deg, #ec4899, #db2777, #be185d);
   width: 100%;
   transform: scaleX(0);
   transform-origin: left;
@@ -600,7 +600,7 @@ onUnmounted(() => {
   left: -2px;
   right: -2px;
   bottom: -2px;
-  background: linear-gradient(135deg, #ef4444, #dc2626, #b91c1c);
+  background: linear-gradient(135deg, #ec4899, #db2777, #be185d);
   border-radius: 18px;
   z-index: -1;
   opacity: 0;
@@ -638,7 +638,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #ef4444, #dc2626, #b91c1c);
+  background: linear-gradient(90deg, #ec4899, #db2777, #be185d);
 }
 
 .charts-header {
@@ -685,7 +685,7 @@ onUnmounted(() => {
 }
 
 .chart-btn:hover {
-  border-color: #ef4444;
+  border-color: #ec4899;
   background: rgba(239, 68, 68, 0.2);
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
@@ -727,7 +727,7 @@ onUnmounted(() => {
   width: 50px;
   height: 50px;
   border: 3px solid rgba(239, 68, 68, 0.3);
-  border-top: 3px solid #ef4444;
+  border-top: 3px solid #ec4899;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
@@ -757,7 +757,7 @@ onUnmounted(() => {
   padding: 1rem;
   background: rgba(30, 41, 59, 0.6);
   border-radius: 12px;
-  border-left: 4px solid #ef4444;
+  border-left: 4px solid #ec4899;
   transition: all 0.3s ease;
   border: 1px solid rgba(239, 68, 68, 0.2);
 }
@@ -838,7 +838,7 @@ onUnmounted(() => {
 
 .animated-input:focus {
   outline: none;
-  border-color: #ef4444;
+  border-color: #ec4899;
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
   transform: scale(1.02);
   background: rgba(15, 23, 42, 0.9);
@@ -855,7 +855,7 @@ onUnmounted(() => {
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
   border: none;
   color: white;
   cursor: pointer;
@@ -899,7 +899,7 @@ onUnmounted(() => {
   left: -2px;
   right: -2px;
   bottom: -2px;
-  background: linear-gradient(135deg, #ef4444, #dc2626, #b91c1c);
+  background: linear-gradient(135deg, #ec4899, #db2777, #be185d);
   border-radius: 50%;
   z-index: -1;
   opacity: 0;
@@ -1110,12 +1110,12 @@ onUnmounted(() => {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
+  background: linear-gradient(135deg, #ec4899, #db2777);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  background: linear-gradient(135deg, #db2777, #be185d);
 }
 
 :deep(.data-table) {
