@@ -75,7 +75,7 @@
           minimumFractionDigits: 0
         }).format(Number(value))
       case 'boolean':
-        return value ? '✅ Да' : value === false ? '❌ Нет' : '-'
+        return value ? 'Да' : value === false ? 'Нет' : '-'
       default:
         return String(value)
     }
@@ -85,10 +85,10 @@
   <style scoped>
   .table-container {
     overflow-x: auto;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    background: transparent;
+    border-radius: 12px;
     margin: 1rem 0;
+    border: 1px solid rgba(236, 72, 153, 0.2);
   }
   
   .data-table {
@@ -96,38 +96,52 @@
     border-collapse: collapse;
     margin: 0;
     font-size: 0.875rem;
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(10px);
   }
   
   .data-table th,
   .data-table td {
     padding: 0.75rem;
     text-align: left;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid rgba(236, 72, 153, 0.2);
     white-space: nowrap;
+    color: #e2e8f0;
   }
   
   .data-table th {
-    background-color: #f8f9fa;
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.2) 0%, rgba(219, 39, 119, 0.1) 100%);
     font-weight: 600;
-    color: #495057;
-    position: sticky;
-    top: 0;
+    color: #f1f5f9;
+    border-bottom: 2px solid rgba(236, 72, 153, 0.3);
   }
   
   .data-table tr:hover {
-    background-color: #f8f9fa;
+    background: rgba(236, 72, 153, 0.1);
+  }
+  
+  .data-table tr:last-child td {
+    border-bottom: none;
   }
   
   .loading, .no-data, .error {
     text-align: center;
     padding: 2rem;
-    color: #666;
+    color: #94a3b8;
     font-style: italic;
+    background: rgba(15, 23, 42, 0.8);
+    border-radius: 12px;
+    border: 1px solid rgba(236, 72, 153, 0.2);
   }
   
   .error {
-    color: #dc3545;
-    background: #f8d7da;
-    border-radius: 4px;
+    color: #fecaca;
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.2) 0%, rgba(219, 39, 119, 0.1) 100%);
+    border-color: rgba(236, 72, 153, 0.3);
+  }
+
+  .no-data {
+    color: #bae6fd;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(30, 64, 175, 0.1) 100%);
   }
   </style>
