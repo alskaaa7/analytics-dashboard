@@ -1,8 +1,6 @@
 import { ref } from 'vue'
 
-const API_HOST = import.meta.env.DEV 
-  ? 'http://109.73.206.144:6969'
-  : '/api'
+const API_HOST = '/api/proxy'
 const API_KEY = 'E6kUTYrYwZq2tN4QEtyzsbEBk3ie'
 
 export function useApi(endpoint) {
@@ -26,7 +24,7 @@ export function useApi(endpoint) {
       if (filters.dateFrom) params.append('dateFrom', filters.dateFrom)
       if (filters.dateTo && endpoint !== 'stocks') params.append('dateTo', filters.dateTo)
 
-      const url = `${API_HOST}/api/${endpoint}?${params}`
+      const url = `${API_HOST}?endpoint=${endpoint}&${params}`
       console.log('API URL:', url)
 
       const response = await fetch(url)

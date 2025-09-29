@@ -1,7 +1,5 @@
-// src/services/api.js
 import axios from 'axios'
 
-// Базовые настройки axios
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
   timeout: 10000,
@@ -10,7 +8,6 @@ const api = axios.create({
   }
 })
 
-// Добавляем интерцептор для логирования
 api.interceptors.request.use(
   (config) => {
     console.log(`🔄 API Request: ${config.method?.toUpperCase()} ${config.url}`, config.params)
@@ -33,5 +30,4 @@ api.interceptors.response.use(
   }
 )
 
-// Named export вместо default export
 export { api }
