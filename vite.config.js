@@ -3,17 +3,7 @@ import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
   plugins: [vue()],
-  server: {
-    port: 3000,
-    proxy: {
-      '/api': {
-        target: 'http://109.73.206.144:6969',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
-        secure: false
-      }
-    }
-  },
+  base: '/analytics-dashboard/', // Важно! Название репозитория
   build: {
     outDir: 'dist'
   }
