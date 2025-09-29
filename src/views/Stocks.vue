@@ -1,6 +1,6 @@
 <template>
   <div class="page dark-theme">
-    <h1 class="page-title">🚀 Склады</h1>
+    <h1 class="page-title">🏭 Склады</h1>
     
     <Filters :show-date-to="true" @filters-change="handleFiltersChange">
       <template #additional-filters>

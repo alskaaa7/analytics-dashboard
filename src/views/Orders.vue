@@ -1,6 +1,6 @@
 <template>
   <div class="page dark-theme">
-    <h1 class="page-title">🚀 Заказы</h1>
+    <h1 class="page-title">🛍️  Заказы</h1>
     
     <Filters @filters-change="handleFiltersChange">
       <template #additional-filters>
