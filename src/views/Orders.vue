@@ -970,7 +970,6 @@ onUnmounted(() => {
   }
 }
 
-/* Анимации */
 .stagger-fade-move,
 .stagger-fade-enter-active,
 .stagger-fade-leave-active {

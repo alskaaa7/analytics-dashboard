@@ -109,8 +109,8 @@ npm run preview
  - Экспорт данных в различных форматах
 
 ## Деплой
-- Проект задеплоен на Netlify и доступен по адресу:
-https://analyticsdatabase.netlify.app
+- Проект задеплоен на Vercel и доступен по адресу:
+https://wb-api-app.vercel.app/sales
 
 ## Структура проекта
 analytics-dashboard/

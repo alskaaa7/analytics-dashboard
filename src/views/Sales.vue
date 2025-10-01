@@ -194,7 +194,6 @@ const salesData = computed(() => {
   return Object.values(apiData.value)
 })
 
-// Статистика
 const totalSales = computed(() => {
   return salesData.value.reduce((sum, item) => sum + (Number(item.total_price) || 0), 0)
 })
@@ -971,7 +970,6 @@ onUnmounted(() => {
   }
 }
 
-/* Анимации */
 .stagger-fade-move,
 .stagger-fade-enter-active,
 .stagger-fade-leave-active {
