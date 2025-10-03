@@ -485,9 +485,9 @@ onUnmounted(() => {
   margin-bottom: 2rem;
   color: #f1f5f9;
   font-size: 2.5rem;
-  font-weight: 700;
+  font-weight: 700; 
   text-align: center;
-  background: linear-gradient(135deg, #ec4899 0%, #db2777 50%, #be185d 100%);
+  background: linear-gradient(135deg, #e86aa9 0%, #f15299 50%, #be185d 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -587,7 +587,7 @@ onUnmounted(() => {
   bottom: 0;
   left: 0;
   height: 3px;
-  background: linear-gradient(90deg, #ec4899, #db2777, #be185d);
+  background: linear-gradient(90deg, #e86aa9, #f15299, #be185d);
   width: 100%;
   transform: scaleX(0);
   transform-origin: left;
@@ -600,7 +600,7 @@ onUnmounted(() => {
   left: -2px;
   right: -2px;
   bottom: -2px;
-  background: linear-gradient(135deg, #ec4899, #db2777, #be185d);
+  background: linear-gradient(135deg, #e86aa9, #f15299, #be185d);
   border-radius: 18px;
   z-index: -1;
   opacity: 0;
@@ -638,7 +638,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #ec4899, #db2777, #be185d);
+  background: linear-gradient(90deg, #e86aa9, #f15299, #be185d);
 }
 
 .charts-header {
@@ -757,7 +757,7 @@ onUnmounted(() => {
   padding: 1rem;
   background: rgba(30, 41, 59, 0.6);
   border-radius: 12px;
-  border-left: 4px solid #ec4899;
+  border-left: 4px solid #e86aa9;
   transition: all 0.3s ease;
   border: 1px solid rgba(239, 68, 68, 0.2);
 }
@@ -855,7 +855,7 @@ onUnmounted(() => {
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+  background: linear-gradient(135deg, #e86aa9 0%, #f15299 100%);
   border: none;
   color: white;
   cursor: pointer;
@@ -899,7 +899,7 @@ onUnmounted(() => {
   left: -2px;
   right: -2px;
   bottom: -2px;
-  background: linear-gradient(135deg, #ec4899, #db2777, #be185d);
+  background: linear-gradient(135deg, #e86aa9, #f15299, #be185d);
   border-radius: 50%;
   z-index: -1;
   opacity: 0;
