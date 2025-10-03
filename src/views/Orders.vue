@@ -497,10 +497,10 @@ onUnmounted(() => {
 
 @keyframes titleGlow {
   from {
-    text-shadow: 0 0 20px rgba(244, 87, 173, 0.5);
+    text-shadow: 0 0 20px rgba(242, 127, 190, 0.5);
   }
   to {
-    text-shadow: 0 0 30px rgba(240, 39, 140, 0.8), 0 0 40px rgba(167, 22, 82, 0.6);
+    text-shadow: 0 0 30px rgba(245, 97, 171, 0.8), 0 0 40px rgba(167, 22, 82, 0.6);
   }
 }
 
