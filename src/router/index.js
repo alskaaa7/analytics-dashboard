@@ -11,15 +11,17 @@ const routes = [
   },
   {
     path: '/metric/:metricId',
-    name: 'Metric',
-    component: MetricPage,
-    props: true
+    name: 'MetricPage',
+    component: MetricPage
   },
   {
     path: '/article/:articleId',
-    name: 'Article',
-    component: ArticlePage,
-    props: true
+    name: 'ArticlePage', 
+    component: ArticlePage
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/'
   }
 ]
 
