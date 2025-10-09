@@ -11,6 +11,8 @@ export function useApi(endpoint) {
     
     try {
       const params = {
+        key: 'E6kUTYrYwZq2tN4QEtyzsbEBk3ie',
+        limit: 100,
         ...filters
       }
 
@@ -21,28 +23,19 @@ export function useApi(endpoint) {
         }
       });
 
-      // Используем API
-      const url = `/api?${new URLSearchParams(params)}`;
-      console.log('API Request:', url);
+      // Используем CORS прокси
+      const apiUrl = `http://109.73.206.144:6969/api/orders?${new URLSearchParams(params)}`;
+      const proxyUrl = `https://cors-anywhere.herokuapp.com/${apiUrl}`;
+      
+      console.log('API Request via CORS proxy:', proxyUrl);
 
-      const response = await fetch(url);
+      const response = await fetch(proxyUrl);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
 
-      const text = await response.text();
-      
-      // Проверяем если это HTML (ошибка)
-      if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
-        throw new Error('Server returned HTML page instead of JSON');
-      }
-
-      const result = JSON.parse(text);
-      
-      if (result.error) {
-        throw new Error(result.error);
-      }
+      const result = await response.json();
       
       // Извлекаем данные
       let extractedData = [];
