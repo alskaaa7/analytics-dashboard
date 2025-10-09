@@ -87,8 +87,12 @@
             </div>
 
             <!-- Mini Chart -->
-            <div class="mini-chart-container">
-              <canvas :ref="el => metric.chartRef = el"></canvas>
+            <div class="mini-chart-wrapper">
+              <MiniChart 
+                :data="metric.chartData" 
+                :color="metric.change >= 0 ? '#10b981' : '#ef4444'"
+                height="50px"
+              />
             </div>
           </div>
         </div>
@@ -125,14 +129,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useApi } from '../composables/useApi'
 import DataTable from '../components/DataTable.vue'
 import Filters from '../components/Filters.vue'
-import { Chart, registerables } from 'chart.js'
-
-Chart.register(...registerables)
+import MiniChart from '../components/MiniChart.vue'
 
 const router = useRouter()
 
@@ -158,7 +160,7 @@ const filterConfig = [
   { key: 'region_name', label: '🌍 Регион', placeholder: 'Поиск по региону' }
 ]
 
-// Metrics with chart references
+// Metrics
 const metrics = ref([
   { 
     id: 'sales_count', 
@@ -167,8 +169,7 @@ const metrics = ref([
     description: 'Общее число продаж', 
     currentValue: '0', 
     change: 0,
-    chartRef: null,
-    chartInstance: null
+    chartData: [10, 20, 15, 25, 30, 35, 40] // Пример данных для графика
   },
   { 
     id: 'revenue', 
@@ -177,8 +178,7 @@ const metrics = ref([
     description: 'Суммарный доход', 
     currentValue: '0 ₽', 
     change: 0,
-    chartRef: null,
-    chartInstance: null
+    chartData: [1000, 1500, 1200, 1800, 2000, 2200, 2500]
   },
   { 
     id: 'cancellations', 
@@ -187,8 +187,7 @@ const metrics = ref([
     description: 'Отмененные заказы', 
     currentValue: '0', 
     change: 0,
-    chartRef: null,
-    chartInstance: null
+    chartData: [5, 3, 7, 2, 4, 6, 3]
   },
   { 
     id: 'discounts', 
@@ -197,8 +196,7 @@ const metrics = ref([
     description: 'Средний процент скидки', 
     currentValue: '0%', 
     change: 0,
-    chartRef: null,
-    chartInstance: null
+    chartData: [15, 12, 18, 14, 16, 13, 17]
   }
 ])
 
@@ -262,69 +260,11 @@ const calculateAverageDiscount = (data) => {
   return discounts.length ? discounts.reduce((a, b) => a + b) / discounts.length : 0
 }
 
-// Mini charts functions
-const createMiniChart = (metric, data) => {
-  if (!metric.chartRef) return
-
-  // Destroy existing chart
-  if (metric.chartInstance) {
-    metric.chartInstance.destroy()
-  }
-
-  // Generate sample data for the mini chart (last 7 days trend)
-  const trendData = generateTrendData(metric.id, data)
+// Generate real chart data from orders
+const generateChartData = (data, metricId) => {
+  if (!data.length) return [0, 0, 0, 0, 0, 0, 0]
   
-  const ctx = metric.chartRef.getContext('2d')
-  
-  metric.chartInstance = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: trendData.labels,
-      datasets: [{
-        data: trendData.values,
-        borderColor: metric.change >= 0 ? '#10b981' : '#ef4444',
-        backgroundColor: metric.change >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-        borderWidth: 2,
-        tension: 0.4,
-        fill: true,
-        pointRadius: 0,
-        pointHoverRadius: 3
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: false
-        },
-        tooltip: {
-          enabled: false
-        }
-      },
-      scales: {
-        x: {
-          display: false
-        },
-        y: {
-          display: false
-        }
-      },
-      interaction: {
-        intersect: false,
-        mode: 'index'
-      },
-      elements: {
-        line: {
-          borderWidth: 2
-        }
-      }
-    }
-  })
-}
-
-const generateTrendData = (metricId, data) => {
-  // Group data by date for the last 7 days
+  // Группируем по дням за последние 7 дней
   const last7Days = Array.from({ length: 7 }, (_, i) => {
     const date = new Date()
     date.setDate(date.getDate() - (6 - i))
@@ -347,34 +287,17 @@ const generateTrendData = (metricId, data) => {
     }
   })
 
-  const labels = last7Days.map(date => {
-    const d = new Date(date)
-    return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })
-  })
-
-  const values = last7Days.map(date => {
+  return last7Days.map(date => {
     const dayData = dailyData[date] || { sales: 0, revenue: 0, cancellations: 0, discounts: [] }
     
     switch(metricId) {
       case 'sales_count': return dayData.sales
-      case 'revenue': return dayData.revenue / 1000 // Scale down for better visualization
+      case 'revenue': return Math.round(dayData.revenue / 1000) // Масштабируем для графика
       case 'cancellations': return dayData.cancellations
       case 'discounts': return dayData.discounts.length > 0 ? 
-        dayData.discounts.reduce((a, b) => a + b, 0) / dayData.discounts.length : 0
+        Number((dayData.discounts.reduce((a, b) => a + b, 0) / dayData.discounts.length).toFixed(1)) : 0
       default: return 0
     }
-  })
-
-  return { labels, values }
-}
-
-const initMiniCharts = () => {
-  if (currentData.value.length === 0) return
-
-  nextTick(() => {
-    metrics.value.forEach(metric => {
-      createMiniChart(metric, currentData.value)
-    })
   })
 }
 
@@ -409,10 +332,10 @@ const analyzeMetrics = () => {
     const previous = previousMetrics[metric.id]
     metric.currentValue = formatMetricValue(metric.id, current)
     metric.change = calculateChange(current, previous)
+    
+    // Обновляем данные для графиков
+    metric.chartData = generateChartData(currentData.value, metric.id)
   })
-
-  // Initialize mini charts after metrics are calculated
-  initMiniCharts()
 }
 
 // Data processing
@@ -733,8 +656,8 @@ onMounted(() => {
 }
 
 /* Mini Chart Styles */
-.mini-chart-container {
-  height: 60px;
+.mini-chart-wrapper {
+  height: 50px;
   width: 100%;
   margin-top: 0.5rem;
 }
