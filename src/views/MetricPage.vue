@@ -102,7 +102,7 @@ const additionalFilters = ref({
 
 const metricDefinitions = {
   sales_count: { title: 'Количество продаж', icon: '📦', unit: 'шт.' },
-  revenue: { title: 'Выручка', icon: '💰', unit: '₽' },
+  revenue: { title: 'Доход', icon: '💰', unit: '₽' },
   cancellations: { title: 'Количество отмен', icon: '❌', unit: 'шт.' },
   discounts: { title: 'Средняя скидка', icon: '🎯', unit: '%' }
 }

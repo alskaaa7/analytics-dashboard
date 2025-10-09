@@ -173,7 +173,7 @@ const metrics = ref([
   },
   { 
     id: 'revenue', 
-    title: 'Выручка', 
+    title: 'Доход', 
     icon: '💰', 
     description: 'Суммарный доход', 
     currentValue: '0 ₽', 

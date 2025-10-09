@@ -148,7 +148,7 @@
                   <div class="stat-icon">💰</div>
                   <div class="stat-content">
                     <div class="stat-value">{{ totalRevenue }} ₽</div>
-                    <div class="stat-label">Общая выручка</div>
+                    <div class="stat-label">Общий доход</div>
                   </div>
                 </div>
                 <div class="stat-overview">
@@ -392,7 +392,7 @@ const metricsTableData = computed(() => {
       }, {})
     },
     {
-      metric: 'Выручка',
+      metric: 'Доход',
       values: datesData.reduce((acc, day) => {
         acc[day.date] = Math.round(day.revenue)
         return acc
@@ -456,7 +456,7 @@ const metricsColumns = computed(() => {
         if (dateValue === undefined || dateValue === null) return '<span class="no-data">-</span>'
         
         switch (metric) {
-          case 'Выручка':
+          case 'Доход':
             return `<div class="metric-value revenue">${Number(dateValue).toLocaleString()} ₽</div>`
           case 'Средняя скидка':
             return `<div class="metric-value discount">${dateValue}%</div>`
@@ -473,7 +473,7 @@ const metricsColumns = computed(() => {
 const getMetricIcon = (metric) => {
   const icons = {
     'Количество продаж': '🛒',
-    'Выручка': '💰',
+    'Доход': '💰',
     'Количество отмен': '❌',
     'Средняя скидка': '🎯',
     'Количество товаров': '📦'
