@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 
-const isProduction = import.meta.env.PROD
+// Всегда используем прокси в production
+const isProduction = window.location.protocol === 'https:'
 
 export function useApi(endpoint) {
   const data = ref(null)
@@ -13,17 +14,19 @@ export function useApi(endpoint) {
     
     try {
       let url
-      
+      const params = {
+        key: 'E6kUTYrYwZq2tN4QEtyzsbEBk3ie',
+        ...filters
+      }
+
       if (isProduction) {
-        // В production используем прокси
-        url = `/api/proxy?${new URLSearchParams(filters)}`
+        // В production всегда используем прокси
+        url = `/api/proxy?${new URLSearchParams(params)}`
+        console.log('Using proxy URL:', url)
       } else {
         // В development используем прямое подключение
-        const params = {
-          key: 'E6kUTYrYwZq2tN4QEtyzsbEBk3ie',
-          ...filters
-        }
         url = `http://109.73.206.144:6969/api/${endpoint}?${new URLSearchParams(params)}`
+        console.log('Using direct URL:', url)
       }
 
       const response = await fetch(url)
@@ -59,6 +62,7 @@ export function useApi(endpoint) {
     } catch (err) {
       error.value = err.message
       data.value = []
+      console.error('API Error:', err)
     } finally {
       loading.value = false
     }
