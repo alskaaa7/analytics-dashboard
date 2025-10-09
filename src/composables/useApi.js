@@ -23,10 +23,22 @@ export function useApi(endpoint) {
 
       // Используем API
       const url = `/api?${new URLSearchParams(params)}`;
-      console.log('API Request to:', url);
+      console.log('API Request:', url);
 
       const response = await fetch(url);
-      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const text = await response.text();
+      
+      // Проверяем если это HTML (ошибка)
+      if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+        throw new Error('Server returned HTML page instead of JSON');
+      }
+
+      const result = JSON.parse(text);
       
       if (result.error) {
         throw new Error(result.error);

@@ -1,31 +1,21 @@
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 module.exports = async (req, res) => {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', true);
+  // Простые CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET');
 
   try {
     const { query } = req;
     
-    // Строим URL для API
-    const baseUrl = 'http://109.73.206.144:6969/api/orders';
-    const url = new URL(baseUrl);
-    
-    // Добавляем обязательные параметры
+    // Базовые параметры
     const params = {
       key: 'E6kUTYrYwZq2tN4QEtyzsbEBk3ie',
+      limit: '100',
       ...query
     };
     
-    // Добавляем даты если их нет
+    // Добавляем даты если нет
     if (!params.dateFrom) {
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
@@ -36,47 +26,27 @@ module.exports = async (req, res) => {
       params.dateTo = new Date().toISOString().split('T')[0];
     }
     
-    // Добавляем лимит если нет
-    if (!params.limit) {
-      params.limit = '100';
-    }
+    // Строим URL
+    const apiUrl = 'http://109.73.206.144:6969/api/orders';
+    const url = new URL(apiUrl);
     
-    // Добавляем все параметры
     Object.keys(params).forEach(key => {
-      if (params[key] !== undefined && params[key] !== '') {
+      if (params[key]) {
         url.searchParams.append(key, params[key]);
       }
     });
     
-    console.log('Proxying to:', url.toString());
+    console.log('Fetching:', url.toString());
     
     const response = await fetch(url.toString());
-    const responseText = await response.text();
-    
-    // Проверяем если ответ HTML (ошибка)
-    if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
-      throw new Error('API returned HTML instead of JSON');
-    }
-    
-    // Парсим JSON
-    let data;
-    try {
-      data = JSON.parse(responseText);
-    } catch (parseError) {
-      throw new Error(`Invalid JSON: ${responseText.substring(0, 100)}`);
-    }
-    
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status} - ${JSON.stringify(data)}`);
-    }
+    const data = await response.json();
     
     res.status(200).json(data);
     
   } catch (error) {
-    console.error('Proxy error:', error);
+    console.error('Error:', error);
     res.status(500).json({ 
-      error: error.message,
-      details: 'API server error'
+      error: error.message
     });
   }
 };
