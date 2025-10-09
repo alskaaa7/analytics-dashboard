@@ -53,15 +53,53 @@
       </template>
     </Filters>
 
-    <!-- Основной график -->
-    <div class="main-chart-section">
+    <!-- Debug Info -->
+    <div v-if="showDebug" class="debug-section">
+      <h3>Debug Info</h3>
+      <p>Loading: {{ loading }}</p>
+      <p>Data length: {{ ordersData.length }}</p>
+      <p>Error: {{ error }}</p>
+      <p>Chart instance: {{ chartInstance ? 'exists' : 'null' }}</p>
+    </div>
+
+    <!-- Loading State -->
+    <div v-if="loading" class="loading-section">
+      <div class="loading-spinner-large"></div>
+      <div class="loading-text">Загрузка данных...</div>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="error-section">
+      <div class="error-icon">⚠️</div>
+      <div class="error-text">{{ error }}</div>
+      <button @click="retryLoading" class="retry-btn">
+        Повторить попытку
+      </button>
+    </div>
+
+    <!-- Main Chart -->
+    <div v-else-if="ordersData.length > 0" class="main-chart-section">
+      <div class="chart-header">
+        <h3>Динамика {{ currentMetric.title.toLowerCase() }}</h3>
+        <div class="chart-stats">
+          <span class="stat-item">Всего записей: {{ ordersData.length }}</span>
+          <span class="stat-item">Период: {{ dateRange }}</span>
+        </div>
+      </div>
       <div class="chart-container">
-        <canvas ref="mainChart"></canvas>
+        <canvas ref="mainChart" id="mainChartCanvas"></canvas>
       </div>
     </div>
 
-    <!-- Таблица -->
-    <div class="table-section">
+    <!-- No Data -->
+    <div v-else class="no-data-section">
+      <div class="no-data-icon">📊</div>
+      <div class="no-data-text">Нет данных для отображения</div>
+      <div class="no-data-subtext">Попробуйте изменить параметры фильтрации</div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-section" v-if="ordersData.length > 0 && !loading">
       <h2 class="table-title">Топ артикулов - {{ currentMetric.title }}</h2>
       <DataTable 
         :data="topItems"
@@ -80,29 +118,24 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useApi } from '../composables/useApi'
 import DataTable from '../components/DataTable.vue'
 import Filters from '../components/Filters.vue'
 import { Chart, registerables } from 'chart.js'
 
-const calculateChange = (current, previous) => {
-  if (current === 0 && previous === 0) return 0
-  if (previous === 0) return current > 0 ? 100 : 0
-  
-  const change = ((current - previous) / previous) * 100
-  const rounded = Math.round(change * 10) / 10
-  return Math.abs(rounded) < 0.1 ? 0 : rounded
-}
-
+// Register Chart.js components
 Chart.register(...registerables)
 
 const route = useRoute()
 const router = useRouter()
+const showDebug = ref(false)
+
 const { 
   data: apiData, 
   loading, 
+  error: apiError,
   fetchData 
 } = useApi('orders')
 
@@ -129,9 +162,29 @@ const currentMetric = computed(() => {
 })
 
 const ordersData = computed(() => {
+  console.log('📦 API Data:', apiData.value)
   if (!apiData.value) return []
   return Array.isArray(apiData.value) ? apiData.value : 
          apiData.value.data || apiData.value.orders || apiData.value.results || []
+})
+
+const error = computed(() => {
+  return apiError.value
+})
+
+const dateRange = computed(() => {
+  if (ordersData.value.length === 0) return 'Нет данных'
+  
+  const dates = ordersData.value
+    .map(item => item.date ? new Date(item.date) : null)
+    .filter(date => date && !isNaN(date.getTime()))
+  
+  if (dates.length === 0) return 'Нет данных'
+  
+  const minDate = new Date(Math.min(...dates))
+  const maxDate = new Date(Math.max(...dates))
+  
+  return `${minDate.toLocaleDateString('ru-RU')} - ${maxDate.toLocaleDateString('ru-RU')}`
 })
 
 const topItems = computed(() => {
@@ -146,7 +199,6 @@ const topItems = computed(() => {
       acc[nmId] = {
         nm_id: nmId,
         currentValue: 0,
-        previousValue: 0, // Добавляем для предыдущего периода
         name: item.subject || `Артикул ${nmId}`
       }
     }
@@ -188,11 +240,6 @@ const topItems = computed(() => {
     })
   }
 
-  // Добавляем расчет изменений
-  Object.values(itemsByNmId).forEach(item => {
-    item.change = calculateChange(item.currentValue, item.previousValue)
-  })
-
   return Object.values(itemsByNmId)
     .sort((a, b) => b.currentValue - a.currentValue)
     .slice(0, 10)
@@ -212,7 +259,7 @@ const tableColumns = computed(() => [
   },
   { 
     key: 'currentValue', 
-    title: 'Текущий период', 
+    title: 'Значение', 
     type: 'number',
     render: (value) => formatValue(value)
   }
@@ -231,9 +278,10 @@ const formatValue = (value) => {
 }
 
 const handleFiltersChange = (filters) => {
+  console.log('🔧 Filters changed:', filters)
   const apiFilters = {
     page: 1,
-    limit: filters.limit || 100,
+    limit: 1000, // Увеличиваем лимит для графиков
     dateFrom: filters.dateFrom || getDefaultDateFrom(),
     dateTo: filters.dateTo || getDefaultDateTo(),
     ...additionalFilters.value
@@ -260,73 +308,145 @@ const goBack = () => {
   router.back()
 }
 
-const initChart = () => {
-  if (!mainChart.value) return
+const retryLoading = () => {
+  const defaultFilters = {
+    limit: 1000,
+    page: 1,
+    dateFrom: getDefaultDateFrom(),
+    dateTo: getDefaultDateTo(),
+    ...additionalFilters.value
+  }
+  
+  fetchData(defaultFilters)
+}
 
-  if (chartInstance) {
-    chartInstance.destroy()
+const initChart = () => {
+  console.log('🔄 Initializing chart...')
+  
+  if (!mainChart.value) {
+    console.log('❌ Chart canvas not found')
+    return
   }
 
-  // Генерируем данные для графика на основе реальных данных
-  const dailyData = ordersData.value.reduce((acc, item) => {
-    const date = item.date ? item.date.split('T')[0] : 'Неизвестная дата'
-    if (!acc[date]) {
-      acc[date] = { sales: 0, revenue: 0, cancellations: 0, discounts: [] }
-    }
-    
-    acc[date].sales += 1
-    acc[date].revenue += Number(item.total_price) || 0
-    if (item.is_cancel) acc[date].cancellations += 1
-    if (item.discount_percent) acc[date].discounts.push(Number(item.discount_percent))
-    
-    return acc
-  }, {})
+  if (chartInstance) {
+    console.log('🗑️ Destroying previous chart instance')
+    chartInstance.destroy()
+    chartInstance = null
+  }
 
-  const sortedDates = Object.keys(dailyData).sort()
-  const labels = sortedDates.map(date => {
-    const d = new Date(date)
-    return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })
-  })
+  if (ordersData.value.length === 0) {
+    console.log('📭 No data for chart')
+    return
+  }
 
-  const data = sortedDates.map(date => {
-    const dayData = dailyData[date]
-    const metricId = route.params.metricId
+  try {
+    // Генерируем данные для графика
+    const dailyData = ordersData.value.reduce((acc, item) => {
+      const date = item.date ? item.date.split('T')[0] : new Date().toISOString().split('T')[0]
+      if (!acc[date]) {
+        acc[date] = { sales: 0, revenue: 0, cancellations: 0, discounts: [] }
+      }
+      
+      acc[date].sales += 1
+      acc[date].revenue += Number(item.total_price) || 0
+      if (item.is_cancel) acc[date].cancellations += 1
+      if (item.discount_percent) acc[date].discounts.push(Number(item.discount_percent))
+      
+      return acc
+    }, {})
+
+    const sortedDates = Object.keys(dailyData).sort()
+    const labels = sortedDates.map(date => {
+      const d = new Date(date)
+      return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })
+    })
+
+    const data = sortedDates.map(date => {
+      const dayData = dailyData[date]
+      const metricId = route.params.metricId
+      
+      switch (metricId) {
+        case 'sales_count': return dayData.sales
+        case 'revenue': return Math.round(dayData.revenue)
+        case 'cancellations': return dayData.cancellations
+        case 'discounts': 
+          return dayData.discounts.length > 0 ? 
+            Number((dayData.discounts.reduce((a, b) => a + b, 0) / dayData.discounts.length).toFixed(1)) : 0
+        default: return 0
+      }
+    })
+
+    console.log('📊 Chart data ready:', { labels, data })
+
+    const ctx = mainChart.value.getContext('2d')
     
-    switch (metricId) {
-      case 'sales_count': return dayData.sales
-      case 'revenue': return dayData.revenue
-      case 'cancellations': return dayData.cancellations
-      case 'discounts': return dayData.discounts.length > 0 ? 
-        dayData.discounts.reduce((a, b) => a + b, 0) / dayData.discounts.length : 0
-      default: return 0
-    }
-  })
-
-  chartInstance = new Chart(mainChart.value, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: currentMetric.value.title,
-        data: data,
-        borderColor: '#ec4899',
-        backgroundColor: 'rgba(236, 72, 153, 0.1)',
-        borderWidth: 3,
-        tension: 0.1,
-        fill: true
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: true,
-          position: 'top',
+    chartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: currentMetric.value.title,
+          data: data,
+          borderColor: '#ec4899',
+          backgroundColor: 'rgba(236, 72, 153, 0.1)',
+          borderWidth: 3,
+          tension: 0.4,
+          fill: true,
+          pointBackgroundColor: '#ec4899',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: {
+              color: '#f1f5f9',
+              font: {
+                size: 14
+              }
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+            titleColor: '#f1f5f9',
+            bodyColor: '#e2e8f0',
+            borderColor: '#ec4899',
+            borderWidth: 1
+          }
+        },
+        scales: {
+          x: {
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)'
+            },
+            ticks: {
+              color: '#94a3b8'
+            }
+          },
+          y: {
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)'
+            },
+            ticks: {
+              color: '#94a3b8'
+            }
+          }
         }
       }
-    }
-  })
+    })
+
+    console.log('✅ Chart initialized successfully')
+    
+  } catch (error) {
+    console.error('❌ Chart initialization error:', error)
+  }
 }
 
 const getDefaultDateFrom = () => {
@@ -340,7 +460,10 @@ const getDefaultDateTo = () => {
   return today.toISOString().split('T')[0]
 }
 
+// Load data on mount
 onMounted(() => {
+  console.log('🚀 MetricPage mounted')
+  
   // Загружаем фильтры из query параметров
   Object.keys(additionalFilters.value).forEach(key => {
     if (route.query[key]) {
@@ -349,7 +472,39 @@ onMounted(() => {
   })
 
   const defaultFilters = {
-    limit: 100,
+    limit: 1000,
+    page: 1,
+    dateFrom: getDefaultDateFrom(),
+    dateTo: getDefaultDateTo(),
+    ...additionalFilters.value
+  }
+  
+  console.log('📡 Fetching data with filters:', defaultFilters)
+  fetchData(defaultFilters)
+})
+
+// Watch for data changes and initialize chart
+watch(ordersData, (newData) => {
+  console.log('📦 Orders data updated:', newData.length, 'items')
+  if (newData.length > 0) {
+    nextTick(() => {
+      setTimeout(() => {
+        initChart()
+      }, 100)
+    })
+  }
+})
+
+// Watch for route changes
+watch(() => route.params.metricId, (newMetricId) => {
+  console.log('🔄 Metric changed to:', newMetricId)
+  if (chartInstance) {
+    chartInstance.destroy()
+    chartInstance = null
+  }
+  
+  const defaultFilters = {
+    limit: 1000,
     page: 1,
     dateFrom: getDefaultDateFrom(),
     dateTo: getDefaultDateTo(),
@@ -359,8 +514,9 @@ onMounted(() => {
   fetchData(defaultFilters)
 })
 
-watch([ordersData, mainChart], () => {
-  initChart()
+// Watch for loading state changes
+watch(loading, (isLoading) => {
+  console.log('⏳ Loading state:', isLoading)
 })
 </script>
 
@@ -397,6 +553,81 @@ watch([ordersData, mainChart], () => {
   font-size: 1.2rem;
 }
 
+.debug-section {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: #fecaca;
+}
+
+.debug-section h3 {
+  margin: 0 0 0.5rem 0;
+  color: #fecaca;
+}
+
+.loading-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.loading-spinner-large {
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(239, 68, 68, 0.3);
+  border-top: 4px solid #ec4899;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.loading-text {
+  color: #94a3b8;
+  font-size: 1.1rem;
+}
+
+.error-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.error-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.7;
+}
+
+.error-text {
+  color: #fecaca;
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+.retry-btn {
+  padding: 0.75rem 1.5rem;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  border-radius: 8px;
+  color: #fecaca;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.retry-btn:hover {
+  background: rgba(239, 68, 68, 0.3);
+}
+
 .main-chart-section {
   background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
   padding: 2rem;
@@ -406,9 +637,62 @@ watch([ordersData, mainChart], () => {
   backdrop-filter: blur(10px);
 }
 
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.chart-header h3 {
+  color: #f1f5f9;
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.chart-stats {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.stat-item {
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
 .chart-container {
   height: 400px;
   position: relative;
+}
+
+.no-data-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border-radius: 20px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  margin: 2rem 0;
+}
+
+.no-data-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.7;
+}
+
+.no-data-text {
+  color: #f1f5f9;
+  font-size: 1.3rem;
+  margin-bottom: 0.5rem;
+}
+
+.no-data-subtext {
+  color: #94a3b8;
+  font-size: 1rem;
 }
 
 .table-section {
@@ -425,5 +709,23 @@ watch([ordersData, mainChart], () => {
   font-weight: 600;
   margin-bottom: 1.5rem;
   text-align: center;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .chart-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .chart-stats {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
 }
 </style>
