@@ -1,12 +1,12 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [vue()],
   base: './',
   build: {
     outDir: 'dist',
+    assetsDir: 'assets',
     rollupOptions: {
       output: {
         manualChunks: {
@@ -14,8 +14,7 @@ export default defineConfig({
           charts: ['chart.js']
         }
       }
-    },
-    assetsDir: 'assets'
+    }
   },
   server: {
     proxy: {
@@ -25,11 +24,6 @@ export default defineConfig({
         secure: false,
         rewrite: (path) => path.replace(/^\/api\/proxy/, '/api')
       }
-    }
-  },
-  resolve: {
-    alias: {
-      '@': resolve(__dirname, 'src')
     }
   }
 })
