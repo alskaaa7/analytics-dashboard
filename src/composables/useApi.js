@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 
-export function useApi(endpoint) {
+export function useApi(endpoint = 'orders') {
   const data = ref(null)
   const loading = ref(false)
   const error = ref(null)
@@ -11,43 +11,45 @@ export function useApi(endpoint) {
     
     try {
       const params = {
-        key: 'E6kUTYrYwZq2tN4QEtyzsbEBk3ie',
         limit: 100,
         ...filters
       }
 
-      // Убираем пустые параметры
+      // Очистка параметров
       Object.keys(params).forEach(key => {
-        if (params[key] === '' || params[key] === undefined) {
+        if (params[key] === '' || params[key] === undefined || params[key] === null) {
           delete params[key];
         }
       });
 
-      // Используем CORS прокси
-      const apiUrl = `http://109.73.206.144:6969/api/orders?${new URLSearchParams(params)}`;
-      const proxyUrl = `https://cors-anywhere.herokuapp.com/${apiUrl}`;
-      
-      console.log('API Request via CORS proxy:', proxyUrl);
+      // Всегда используем Vercel proxy в production и development
+      const apiUrl = `/api/proxy?${new URLSearchParams({
+        ...params,
+        endpoint: endpoint
+      })}`;
 
-      const response = await fetch(proxyUrl);
+      console.log('API Request to:', apiUrl);
+
+      const response = await fetch(apiUrl);
       
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
       const result = await response.json();
       
-      // Извлекаем данные
-      let extractedData = [];
-      if (result && typeof result === 'object') {
-        if (result.data && Array.isArray(result.data)) {
-          extractedData = result.data;
-        } else if (Array.isArray(result.orders)) {
-          extractedData = result.orders;
-        } else if (Array.isArray(result)) {
-          extractedData = result;
-        }
+      // Если есть ошибка от API
+      if (result.error) {
+        throw new Error(result.message || result.error);
       }
+
+      // Обработка данных
+      let extractedData = [];
+      if (result?.data) extractedData = result.data;
+      else if (result?.orders) extractedData = result.orders;
+      else if (Array.isArray(result)) extractedData = result;
+      else if (result) extractedData = [result];
 
       // Нормализация
       data.value = extractedData.map(item => ({
@@ -56,11 +58,14 @@ export function useApi(endpoint) {
         discount_percent: Number(item.discount_percent) || 0,
         quantity: Number(item.quantity) || 1,
         is_cancel: Boolean(item.is_cancel),
-        nm_id: item.nm_id ? item.nm_id.toString() : null
+        nm_id: item.nm_id ? item.nm_id.toString() : null,
+        date: item.date || item.created_at || new Date().toISOString()
       })).filter(item => item.nm_id);
       
+      console.log(`Loaded ${data.value.length} items`);
+      
     } catch (err) {
-      error.value = `API Error: ${err.message}`;
+      error.value = `Ошибка загрузки данных: ${err.message}`;
       data.value = [];
       console.error('API Error:', err);
     } finally {
