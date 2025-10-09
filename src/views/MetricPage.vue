@@ -20,47 +20,8 @@
             class="animated-input"
           >
         </div>
-        <div class="filter-group">
-          <label>Категория:</label>
-          <input 
-            type="text" 
-            v-model="additionalFilters.category"
-            @input="handleFiltersChange"
-            placeholder="Поиск по категории"
-            class="animated-input"
-          >
-        </div>
-        <div class="filter-group">
-          <label>Бренд:</label>
-          <input 
-            type="text" 
-            v-model="additionalFilters.brand"
-            @input="handleFiltersChange"
-            placeholder="Поиск по бренду"
-            class="animated-input"
-          >
-        </div>
-        <div class="filter-group">
-          <label>Регион:</label>
-          <input 
-            type="text" 
-            v-model="additionalFilters.region_name"
-            @input="handleFiltersChange"
-            placeholder="Поиск по региону"
-            class="animated-input"
-          >
-        </div>
       </template>
     </Filters>
-
-    <!-- Debug Info -->
-    <div v-if="showDebug" class="debug-section">
-      <h3>Debug Info</h3>
-      <p>Loading: {{ loading }}</p>
-      <p>Data length: {{ ordersData.length }}</p>
-      <p>Error: {{ error }}</p>
-      <p>Chart instance: {{ chartInstance ? 'exists' : 'null' }}</p>
-    </div>
 
     <!-- Loading State -->
     <div v-if="loading" class="loading-section">
@@ -108,12 +69,6 @@
         @row-click="handleRowClick"
       />
     </div>
-
-    <div class="bg-elements">
-      <div class="bg-circle circle-1"></div>
-      <div class="bg-circle circle-2"></div>
-      <div class="bg-circle circle-3"></div>
-    </div>
   </div>
 </template>
 
@@ -130,7 +85,6 @@ Chart.register(...registerables)
 
 const route = useRoute()
 const router = useRouter()
-const showDebug = ref(false)
 
 const { 
   data: apiData, 
@@ -143,10 +97,7 @@ const mainChart = ref(null)
 let chartInstance = null
 
 const additionalFilters = ref({
-  nm_id: '',
-  category: '',
-  brand: '',
-  region_name: ''
+  nm_id: ''
 })
 
 const metricDefinitions = {
@@ -162,7 +113,6 @@ const currentMetric = computed(() => {
 })
 
 const ordersData = computed(() => {
-  console.log('📦 API Data:', apiData.value)
   if (!apiData.value) return []
   return Array.isArray(apiData.value) ? apiData.value : 
          apiData.value.data || apiData.value.orders || apiData.value.results || []
@@ -278,10 +228,8 @@ const formatValue = (value) => {
 }
 
 const handleFiltersChange = (filters) => {
-  console.log('🔧 Filters changed:', filters)
   const apiFilters = {
-    page: 1,
-    limit: 1000, // Увеличиваем лимит для графиков
+    limit: 500, // Уменьшаем лимит для теста
     dateFrom: filters.dateFrom || getDefaultDateFrom(),
     dateTo: filters.dateTo || getDefaultDateTo(),
     ...additionalFilters.value
@@ -310,8 +258,7 @@ const goBack = () => {
 
 const retryLoading = () => {
   const defaultFilters = {
-    limit: 1000,
-    page: 1,
+    limit: 500,
     dateFrom: getDefaultDateFrom(),
     dateTo: getDefaultDateTo(),
     ...additionalFilters.value
@@ -321,23 +268,14 @@ const retryLoading = () => {
 }
 
 const initChart = () => {
-  console.log('🔄 Initializing chart...')
-  
-  if (!mainChart.value) {
-    console.log('❌ Chart canvas not found')
-    return
-  }
+  if (!mainChart.value) return
 
   if (chartInstance) {
-    console.log('🗑️ Destroying previous chart instance')
     chartInstance.destroy()
     chartInstance = null
   }
 
-  if (ordersData.value.length === 0) {
-    console.log('📭 No data for chart')
-    return
-  }
+  if (ordersData.value.length === 0) return
 
   try {
     // Генерируем данные для графика
@@ -375,8 +313,6 @@ const initChart = () => {
         default: return 0
       }
     })
-
-    console.log('📊 Chart data ready:', { labels, data })
 
     const ctx = mainChart.value.getContext('2d')
     
@@ -441,8 +377,6 @@ const initChart = () => {
         }
       }
     })
-
-    console.log('✅ Chart initialized successfully')
     
   } catch (error) {
     console.error('❌ Chart initialization error:', error)
@@ -450,9 +384,9 @@ const initChart = () => {
 }
 
 const getDefaultDateFrom = () => {
-  const monthAgo = new Date()
-  monthAgo.setDate(monthAgo.getDate() - 30)
-  return monthAgo.toISOString().split('T')[0]
+  const weekAgo = new Date()
+  weekAgo.setDate(weekAgo.getDate() - 7)
+  return weekAgo.toISOString().split('T')[0]
 }
 
 const getDefaultDateTo = () => {
@@ -462,8 +396,6 @@ const getDefaultDateTo = () => {
 
 // Load data on mount
 onMounted(() => {
-  console.log('🚀 MetricPage mounted')
-  
   // Загружаем фильтры из query параметров
   Object.keys(additionalFilters.value).forEach(key => {
     if (route.query[key]) {
@@ -472,51 +404,39 @@ onMounted(() => {
   })
 
   const defaultFilters = {
-    limit: 1000,
-    page: 1,
+    limit: 500,
     dateFrom: getDefaultDateFrom(),
     dateTo: getDefaultDateTo(),
     ...additionalFilters.value
   }
   
-  console.log('📡 Fetching data with filters:', defaultFilters)
   fetchData(defaultFilters)
 })
 
 // Watch for data changes and initialize chart
 watch(ordersData, (newData) => {
-  console.log('📦 Orders data updated:', newData.length, 'items')
   if (newData.length > 0) {
     nextTick(() => {
-      setTimeout(() => {
-        initChart()
-      }, 100)
+      initChart()
     })
   }
 })
 
 // Watch for route changes
-watch(() => route.params.metricId, (newMetricId) => {
-  console.log('🔄 Metric changed to:', newMetricId)
+watch(() => route.params.metricId, () => {
   if (chartInstance) {
     chartInstance.destroy()
     chartInstance = null
   }
   
   const defaultFilters = {
-    limit: 1000,
-    page: 1,
+    limit: 500,
     dateFrom: getDefaultDateFrom(),
     dateTo: getDefaultDateTo(),
     ...additionalFilters.value
   }
   
   fetchData(defaultFilters)
-})
-
-// Watch for loading state changes
-watch(loading, (isLoading) => {
-  console.log('⏳ Loading state:', isLoading)
 })
 </script>
 
