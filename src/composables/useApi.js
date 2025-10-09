@@ -11,8 +11,6 @@ export function useApi(endpoint) {
     
     try {
       const params = {
-        key: 'E6kUTYrYwZq2tN4QEtyzsbEBk3ie',
-        limit: 100,
         ...filters
       }
 
@@ -23,19 +21,18 @@ export function useApi(endpoint) {
         }
       });
 
-      // Используем API route
+      // Используем API
       const url = `/api?${new URLSearchParams(params)}`;
       console.log('API Request to:', url);
 
       const response = await fetch(url);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
       const result = await response.json();
       
-      // Обрабатываем ответ
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      
+      // Извлекаем данные
       let extractedData = [];
       if (result && typeof result === 'object') {
         if (result.data && Array.isArray(result.data)) {
@@ -44,12 +41,10 @@ export function useApi(endpoint) {
           extractedData = result.orders;
         } else if (Array.isArray(result)) {
           extractedData = result;
-        } else if (result.error) {
-          throw new Error(result.error);
         }
       }
 
-      // Нормализация данных
+      // Нормализация
       data.value = extractedData.map(item => ({
         ...item,
         total_price: Number(item.total_price) || 0,

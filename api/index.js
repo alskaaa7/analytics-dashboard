@@ -19,34 +19,64 @@ module.exports = async (req, res) => {
     const baseUrl = 'http://109.73.206.144:6969/api/orders';
     const url = new URL(baseUrl);
     
-    // Добавляем параметры
-    Object.keys(query).forEach(key => {
-      if (query[key] !== undefined && query[key] !== '') {
-        url.searchParams.append(key, query[key]);
+    // Добавляем обязательные параметры
+    const params = {
+      key: 'E6kUTYrYwZq2tN4QEtyzsbEBk3ie',
+      ...query
+    };
+    
+    // Добавляем даты если их нет
+    if (!params.dateFrom) {
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      params.dateFrom = weekAgo.toISOString().split('T')[0];
+    }
+    
+    if (!params.dateTo) {
+      params.dateTo = new Date().toISOString().split('T')[0];
+    }
+    
+    // Добавляем лимит если нет
+    if (!params.limit) {
+      params.limit = '100';
+    }
+    
+    // Добавляем все параметры
+    Object.keys(params).forEach(key => {
+      if (params[key] !== undefined && params[key] !== '') {
+        url.searchParams.append(key, params[key]);
       }
     });
-    
-    // Добавляем API ключ если нет
-    if (!query.key) {
-      url.searchParams.append('key', 'E6kUTYrYwZq2tN4QEtyzsbEBk3ie');
-    }
     
     console.log('Proxying to:', url.toString());
     
     const response = await fetch(url.toString());
+    const responseText = await response.text();
     
-    if (!response.ok) {
-      throw new Error(`API responded with status: ${response.status}`);
+    // Проверяем если ответ HTML (ошибка)
+    if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
+      throw new Error('API returned HTML instead of JSON');
     }
     
-    const data = await response.json();
+    // Парсим JSON
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      throw new Error(`Invalid JSON: ${responseText.substring(0, 100)}`);
+    }
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status} - ${JSON.stringify(data)}`);
+    }
+    
     res.status(200).json(data);
     
   } catch (error) {
     console.error('Proxy error:', error);
     res.status(500).json({ 
       error: error.message,
-      details: 'Failed to fetch from API'
+      details: 'API server error'
     });
   }
 };
