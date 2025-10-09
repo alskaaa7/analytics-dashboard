@@ -11,6 +11,26 @@
             <span class="btn-icon">🔄</span>
             Обновить
           </button>
+          <button class="debug-btn" @click="showDebugInfo = !showDebugInfo">
+            <span class="btn-icon">🐛</span>
+            Debug
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Debug Info -->
+    <div v-if="showDebugInfo" class="debug-section">
+      <h3>Debug Information</h3>
+      <div class="debug-grid">
+        <div class="debug-item">
+          <strong>Current Data:</strong> {{ currentData.length }} items
+        </div>
+        <div class="debug-item">
+          <strong>Chart Data Samples:</strong>
+          <div v-for="metric in metrics" :key="metric.id">
+            {{ metric.title }}: {{ metric.chartData }}
+          </div>
         </div>
       </div>
     </div>
@@ -93,6 +113,9 @@
                 :color="metric.change >= 0 ? '#10b981' : '#ef4444'"
                 height="50px"
               />
+              <div class="chart-debug" v-if="showDebugInfo">
+                Data: {{ metric.chartData }}
+              </div>
             </div>
           </div>
         </div>
@@ -137,6 +160,7 @@ import Filters from '../components/Filters.vue'
 import MiniChart from '../components/MiniChart.vue'
 
 const router = useRouter()
+const showDebugInfo = ref(false)
 
 // API
 const currentApi = useApi('orders')
@@ -169,7 +193,7 @@ const metrics = ref([
     description: 'Общее число продаж', 
     currentValue: '0', 
     change: 0,
-    chartData: [10, 20, 15, 25, 30, 35, 40] // Пример данных для графика
+    chartData: [10, 20, 15, 25, 30, 35, 40] // Тестовые данные
   },
   { 
     id: 'revenue', 
@@ -260,45 +284,75 @@ const calculateAverageDiscount = (data) => {
   return discounts.length ? discounts.reduce((a, b) => a + b) / discounts.length : 0
 }
 
-// Generate real chart data from orders
+// Generate REAL chart data from orders
 const generateChartData = (data, metricId) => {
-  if (!data.length) return [0, 0, 0, 0, 0, 0, 0]
+  console.log(`📊 Generating chart data for ${metricId} from ${data.length} items`)
   
-  // Группируем по дням за последние 7 дней
+  if (!data.length) {
+    console.log('❌ No data for chart')
+    return [0, 0, 0, 0, 0, 0, 0]
+  }
+  
+  // Получаем последние 7 дней
   const last7Days = Array.from({ length: 7 }, (_, i) => {
     const date = new Date()
     date.setDate(date.getDate() - (6 - i))
     return date.toISOString().split('T')[0]
   })
 
+  console.log('📅 Last 7 days:', last7Days)
+
+  // Собираем данные по дням
   const dailyData = {}
   
   data.forEach(item => {
     const date = item.date ? item.date.split('T')[0] : new Date().toISOString().split('T')[0]
     if (last7Days.includes(date)) {
       if (!dailyData[date]) {
-        dailyData[date] = { sales: 0, revenue: 0, cancellations: 0, discounts: [] }
+        dailyData[date] = { sales: 0, revenue: 0, cancellations: 0, discounts: [], discountCount: 0 }
       }
       
       dailyData[date].sales += 1
       dailyData[date].revenue += Number(item.total_price) || 0
       if (item.is_cancel) dailyData[date].cancellations += 1
-      if (item.discount_percent) dailyData[date].discounts.push(Number(item.discount_percent))
+      if (item.discount_percent && item.discount_percent > 0) {
+        dailyData[date].discounts.push(Number(item.discount_percent))
+        dailyData[date].discountCount += 1
+      }
     }
   })
 
-  return last7Days.map(date => {
-    const dayData = dailyData[date] || { sales: 0, revenue: 0, cancellations: 0, discounts: [] }
+  console.log('📈 Daily data collected:', dailyData)
+
+  // Создаем массив данных для графика
+  const chartData = last7Days.map(date => {
+    const dayData = dailyData[date] || { sales: 0, revenue: 0, cancellations: 0, discounts: [], discountCount: 0 }
     
+    let value = 0
     switch(metricId) {
-      case 'sales_count': return dayData.sales
-      case 'revenue': return Math.round(dayData.revenue / 1000) // Масштабируем для графика
-      case 'cancellations': return dayData.cancellations
-      case 'discounts': return dayData.discounts.length > 0 ? 
-        Number((dayData.discounts.reduce((a, b) => a + b, 0) / dayData.discounts.length).toFixed(1)) : 0
-      default: return 0
+      case 'sales_count': 
+        value = dayData.sales
+        break
+      case 'revenue': 
+        value = Math.round(dayData.revenue / 100) // Масштабируем для лучшего отображения
+        break
+      case 'cancellations': 
+        value = dayData.cancellations
+        break
+      case 'discounts': 
+        value = dayData.discounts.length > 0 ? 
+          Number((dayData.discounts.reduce((a, b) => a + b, 0) / dayData.discounts.length).toFixed(1)) : 0
+        break
+      default: 
+        value = 0
     }
+    
+    console.log(`📊 ${date}: ${value} (${metricId})`)
+    return value
   })
+
+  console.log(`✅ Final chart data for ${metricId}:`, chartData)
+  return chartData
 }
 
 // Data loading
@@ -324,6 +378,7 @@ const loadBothPeriodsData = async (filters = {}) => {
 const analyzeMetrics = () => {
   if (loading.value) return
 
+  console.log('🔍 Analyzing metrics...')
   const currentMetrics = calculateMetrics(currentData.value)
   const previousMetrics = calculateMetrics(previousData.value)
 
@@ -333,9 +388,11 @@ const analyzeMetrics = () => {
     metric.currentValue = formatMetricValue(metric.id, current)
     metric.change = calculateChange(current, previous)
     
-    // Обновляем данные для графиков
+    // Генерируем РЕАЛЬНЫЕ данные для графиков
     metric.chartData = generateChartData(currentData.value, metric.id)
   })
+
+  console.log('✅ Metrics analyzed:', metrics.value)
 }
 
 // Data processing
@@ -480,7 +537,7 @@ onMounted(() => {
   margin: 0.5rem 0 0 0;
 }
 
-.refresh-btn {
+.refresh-btn, .debug-btn {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -491,11 +548,38 @@ onMounted(() => {
   color: #60a5fa;
   cursor: pointer;
   transition: all 0.3s ease;
+  margin-left: 0.5rem;
 }
 
-.refresh-btn:hover:not(:disabled) {
+.refresh-btn:hover:not(:disabled), .debug-btn:hover {
   background: rgba(59, 130, 246, 0.2);
   transform: translateY(-2px);
+}
+
+.debug-section {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.debug-section h3 {
+  color: #fecaca;
+  margin: 0 0 1rem 0;
+}
+
+.debug-grid {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.debug-item {
+  color: #fecaca;
+  font-size: 0.9rem;
 }
 
 .status-section {
@@ -660,6 +744,17 @@ onMounted(() => {
   height: 50px;
   width: 100%;
   margin-top: 0.5rem;
+  position: relative;
+}
+
+.chart-debug {
+  position: absolute;
+  bottom: -20px;
+  left: 0;
+  right: 0;
+  font-size: 0.7rem;
+  color: #94a3b8;
+  text-align: center;
 }
 
 .tables-section {
