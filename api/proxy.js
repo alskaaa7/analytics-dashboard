@@ -1,11 +1,10 @@
 export default async function handler(req, res) {
-  // Разрешаем CORS
+  // CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
-  // Handle preflight
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
@@ -15,12 +14,11 @@ export default async function handler(req, res) {
     const { searchParams } = new URL(req.url, `http://${req.headers.host}`);
     const endpoint = searchParams.get('endpoint') || 'orders';
     
-    // Создаем параметры для API
     const apiParams = new URLSearchParams();
     
     // Копируем все query параметры кроме endpoint
     for (const [key, value] of Object.entries(req.query)) {
-      if (key !== 'endpoint') {
+      if (key !== 'endpoint' && value !== undefined && value !== null && value !== '') {
         apiParams.append(key, value);
       }
     }
@@ -32,7 +30,9 @@ export default async function handler(req, res) {
     
     console.log('Proxying to:', apiUrl);
 
-    const response = await fetch(apiUrl);
+    const response = await fetch(apiUrl, {
+      timeout: 10000 // 10 second timeout
+    });
     
     if (!response.ok) {
       throw new Error(`API responded with status: ${response.status}`);
@@ -46,7 +46,8 @@ export default async function handler(req, res) {
     console.error('Proxy error:', error);
     res.status(500).json({ 
       error: 'Failed to fetch data from API',
-      message: error.message 
+      message: error.message,
+      details: 'Check if the API server is running'
     });
   }
 }
