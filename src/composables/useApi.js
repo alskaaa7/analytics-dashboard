@@ -12,36 +12,44 @@ export function useApi(endpoint) {
     try {
       const params = {
         key: 'E6kUTYrYwZq2tN4QEtyzsbEBk3ie',
+        limit: 100,
         ...filters
       }
 
-      // Всегда используем прокси на Vercel
-      const url = `/api/proxy?${new URLSearchParams(params)}`
-      console.log('Fetching from proxy:', url)
+      // Убираем пустые параметры
+      Object.keys(params).forEach(key => {
+        if (params[key] === '' || params[key] === undefined) {
+          delete params[key];
+        }
+      });
 
-      const response = await fetch(url)
+      // Используем API route
+      const url = `/api?${new URLSearchParams(params)}`;
+      console.log('API Request to:', url);
+
+      const response = await fetch(url);
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const result = await response.json()
+      const result = await response.json();
       
-      // Извлекаем данные
-      let extractedData = []
+      // Обрабатываем ответ
+      let extractedData = [];
       if (result && typeof result === 'object') {
         if (result.data && Array.isArray(result.data)) {
-          extractedData = result.data
+          extractedData = result.data;
         } else if (Array.isArray(result.orders)) {
-          extractedData = result.orders
+          extractedData = result.orders;
         } else if (Array.isArray(result)) {
-          extractedData = result
+          extractedData = result;
         } else if (result.error) {
-          throw new Error(result.error)
+          throw new Error(result.error);
         }
       }
 
-      // Нормализация
+      // Нормализация данных
       data.value = extractedData.map(item => ({
         ...item,
         total_price: Number(item.total_price) || 0,
@@ -49,14 +57,14 @@ export function useApi(endpoint) {
         quantity: Number(item.quantity) || 1,
         is_cancel: Boolean(item.is_cancel),
         nm_id: item.nm_id ? item.nm_id.toString() : null
-      })).filter(item => item.nm_id)
+      })).filter(item => item.nm_id);
       
     } catch (err) {
-      error.value = err.message
-      data.value = []
-      console.error('API Error:', err)
+      error.value = `API Error: ${err.message}`;
+      data.value = [];
+      console.error('API Error:', err);
     } finally {
-      loading.value = false
+      loading.value = false;
     }
   }
 
