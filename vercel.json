@@ -12,14 +12,9 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/proxy.js"
-    },
-    {
-      "src": "/assets/(.*)",
-      "headers": {
-        "cache-control": "public, max-age=31536000, immutable"
-      }
+      "src": "/api/proxy",
+      "dest": "/api/proxy.js",
+      "methods": ["GET", "OPTIONS"]
     },
     {
       "src": "/(.*)",

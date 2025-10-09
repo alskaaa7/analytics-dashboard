@@ -1,8 +1,5 @@
 import { ref } from 'vue'
 
-// Всегда используем прокси в production
-const isProduction = window.location.protocol === 'https:'
-
 export function useApi(endpoint) {
   const data = ref(null)
   const loading = ref(false)
@@ -13,21 +10,14 @@ export function useApi(endpoint) {
     error.value = null
     
     try {
-      let url
       const params = {
         key: 'E6kUTYrYwZq2tN4QEtyzsbEBk3ie',
         ...filters
       }
 
-      if (isProduction) {
-        // В production всегда используем прокси
-        url = `/api/proxy?${new URLSearchParams(params)}`
-        console.log('Using proxy URL:', url)
-      } else {
-        // В development используем прямое подключение
-        url = `http://109.73.206.144:6969/api/${endpoint}?${new URLSearchParams(params)}`
-        console.log('Using direct URL:', url)
-      }
+      // Всегда используем прокси на Vercel
+      const url = `/api/proxy?${new URLSearchParams(params)}`
+      console.log('Fetching from proxy:', url)
 
       const response = await fetch(url)
       
@@ -37,7 +27,7 @@ export function useApi(endpoint) {
 
       const result = await response.json()
       
-      // Извлекаем данные из разных форматов ответа
+      // Извлекаем данные
       let extractedData = []
       if (result && typeof result === 'object') {
         if (result.data && Array.isArray(result.data)) {
@@ -46,10 +36,12 @@ export function useApi(endpoint) {
           extractedData = result.orders
         } else if (Array.isArray(result)) {
           extractedData = result
+        } else if (result.error) {
+          throw new Error(result.error)
         }
       }
 
-      // Нормализация данных
+      // Нормализация
       data.value = extractedData.map(item => ({
         ...item,
         total_price: Number(item.total_price) || 0,
